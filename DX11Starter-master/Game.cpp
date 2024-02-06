@@ -274,7 +274,15 @@ void Game::CreateGeometry()
 	*/
 	
 	std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str());
+	std::shared_ptr<Mesh> helix = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str());
+	std::shared_ptr<Mesh> torus = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str());
+
+	// Set meshes to entities 
 	entities.push_back(Entity(sphere));
+	entities.push_back(Entity(helix));
+	entities[entities.size() - 1].GetTransform()->SetPosition(5.0f, 0.0f, 0.0f);
+	entities.push_back(Entity(torus));
+	entities[entities.size() - 1].GetTransform()->SetPosition(-5.0f, 0.0f, 0.0f);
 }
 
 
@@ -300,6 +308,17 @@ void Game::Update(float deltaTime, float totalTime)
 		Quit();
 
 	camera->Update(deltaTime);
+
+	// Temporary animations of entities 
+	float lerp = InverseLerp(-1.0f, 1.0f, sin(totalTime));
+	entities[0].GetTransform()->SetPosition(0.0f, GetCurveByIndex(EASE_IN_BOUNCE, lerp) * 2.0f - 1.0f, 0.0f);
+	entities[0].GetTransform()->SetScale(GetCurveByIndex(EASE_IN_OUT_BOUNCE, lerp) + 0.5f, GetCurveByIndex(EASE_IN_OUT_BOUNCE, lerp) + 0.25, 1.0f );
+
+	entities[1].GetTransform()->SetPosition(5.0f, GetCurveByIndex(EASE_IN_OUT_CUBIC, lerp) * 2.0f - 1.0f, 0.0f);
+	entities[1].GetTransform()->SetScale(1.0f, GetCurveByIndex(EASE_IN_OUT_CUBIC, lerp + 0.5f) , 1.0f);
+
+	entities[2].GetTransform()->SetPosition(-5.0f, GetCurveByIndex(EASE_IN_OUT_ELASTIC, lerp) * 2.0f - 1.0f, 0.0f);
+	entities[2].GetTransform()->SetScale(1.0f, GetCurveByIndex(EASE_IN_OUT_ELASTIC, lerp), 1.0f);
 }
 
 // --------------------------------------------------------
@@ -402,4 +421,9 @@ void Game::Draw(float deltaTime, float totalTime)
 		if (currentSwapBuffer >= numBackBuffers)
 			currentSwapBuffer = 0;
 	}
+}
+
+float Game::InverseLerp(float a, float b, float v)
+{
+	return (v - a) / (b - a);
 }

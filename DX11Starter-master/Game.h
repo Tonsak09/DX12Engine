@@ -9,6 +9,9 @@
 #include "Entity.h"
 #include "BufferStructs.h";
 
+#include "AnimCurves.h"
+#include <algorithm>
+
 class Game 
 	: public DXCore
 {
@@ -47,5 +50,8 @@ private:
 	float fov;
 
 	std::vector<Entity> entities;
+
+	// Following variables are purely for assignment 2 
+	float InverseLerp(float a, float b, float v);
 };
 
