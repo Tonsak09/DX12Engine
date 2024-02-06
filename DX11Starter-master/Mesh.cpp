@@ -7,7 +7,7 @@ Mesh::Mesh(Vertex vertices[], unsigned int indices[], int vertexCount, int index
 {
 	if(constructTangents)
 		CalculateTangents(&vertices[0], vertexCount, &indices[0], indexCount);
-	ContructVIBuffers(vertices, indices);
+	ContructVIBuffers(vertices, indices, vertexCount, indexCount);
 }
 
 Mesh::Mesh(const wchar_t* objFile)
@@ -234,7 +234,7 @@ Mesh::Mesh(const wchar_t* objFile)
 	vertexCount = vertCounter;
 
 	CalculateTangents(&verts[0], vertexCount, &indices[0], indicesCount);
-	ContructVIBuffers(&(verts[0]), &(indices[0]));
+	ContructVIBuffers(&(verts[0]), &(indices[0]), verts.size(), indices.size());
 }
 
 Mesh::~Mesh()
@@ -242,19 +242,18 @@ Mesh::~Mesh()
 
 }
 
-void Mesh::ContructVIBuffers(Vertex vertices[], unsigned int indices[])
+void Mesh::ContructVIBuffers(Vertex vertices[], unsigned int indices[], unsigned int vertexCount, unsigned int indexCount)
 {
 	DX12Helper& dx12Helper = DX12Helper::GetInstance();
 
 	// Create a VERTEX BUFFER
-		// - This holds the vertex data of triangles for a single object
 		// - This buffer is created on the GPU, which is where the data needs to
 		//    be if we want the GPU to act on it (as in: draw it to the screen)
 	{
-		vertexBuffer = dx12Helper.CreateStaticBuffer(sizeof(Vertex), (sizeof(vertices) / sizeof(Vertex)), vertices);
+		vertexBuffer = dx12Helper.CreateStaticBuffer(sizeof(Vertex), vertexCount, vertices);
 
 		vbView.StrideInBytes = sizeof(Vertex);
-		vbView.SizeInBytes = sizeof(Vertex) * (sizeof(vertices) / sizeof(Vertex));
+		vbView.SizeInBytes = sizeof(Vertex) * vertexCount;
 		vbView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
 
 	}
@@ -265,10 +264,10 @@ void Mesh::ContructVIBuffers(Vertex vertices[], unsigned int indices[])
 	// - This buffer is created on the GPU, which is where the data needs to
 	//    be if we want the GPU to act on it (as in: draw it to the screen)
 	{
-		indexBuffer = dx12Helper.CreateStaticBuffer(sizeof(unsigned int), (sizeof(indices) / sizeof(unsigned int)), indices);
+		indexBuffer = dx12Helper.CreateStaticBuffer(sizeof(unsigned int), indexCount, indices);
 		
 		ibView.Format = DXGI_FORMAT_R32_UINT;
-		ibView.SizeInBytes = sizeof(unsigned int) * (sizeof(indices) / sizeof(unsigned int));
+		ibView.SizeInBytes = sizeof(unsigned int) * indexCount;
 		ibView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
 	}
 }

@@ -12,7 +12,7 @@
 class Mesh
 {
 private:
-	void ContructVIBuffers(Vertex vertices[], unsigned int indices[]);
+	void ContructVIBuffers(Vertex vertices[], unsigned int indices[], unsigned int vertexCount, unsigned int indexCount);
 
 	// Buffers that connect data to the GPU 
 	Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer;
