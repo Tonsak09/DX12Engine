@@ -37,6 +37,8 @@ Game::Game(HINSTANCE hInstance)
 
 	ibView = {};
 	vbView = {};
+
+	fov = 1.0f;
 }
 
 // --------------------------------------------------------
@@ -211,7 +213,6 @@ void Game::CreateRootSigAndPipelineState()
 // --------------------------------------------------------
 void Game::CreateCamera()
 {
-	fov = 1.0f;
 	camera = std::make_shared<Camera>(
 		0.0f, 0.0f, -10.0f,							// Origin
 		1.0f,										// Move Speed 
@@ -312,7 +313,7 @@ void Game::Update(float deltaTime, float totalTime)
 	// Temporary animations of entities 
 	float lerp = InverseLerp(-1.0f, 1.0f, sin(totalTime));
 	entities[0].GetTransform()->SetPosition(0.0f, GetCurveByIndex(EASE_IN_BOUNCE, lerp) * 2.0f - 1.0f, 0.0f);
-	entities[0].GetTransform()->SetScale(GetCurveByIndex(EASE_IN_OUT_BOUNCE, lerp) + 0.5f, GetCurveByIndex(EASE_IN_OUT_BOUNCE, lerp) + 0.25, 1.0f );
+	entities[0].GetTransform()->SetScale(GetCurveByIndex(EASE_IN_OUT_BOUNCE, lerp) + 0.5f, GetCurveByIndex(EASE_IN_OUT_BOUNCE, lerp) + 0.25f, 1.0f );
 
 	entities[1].GetTransform()->SetPosition(5.0f, GetCurveByIndex(EASE_IN_OUT_CUBIC, lerp) * 2.0f - 1.0f, 0.0f);
 	entities[1].GetTransform()->SetScale(1.0f, GetCurveByIndex(EASE_IN_OUT_CUBIC, lerp + 0.5f) , 1.0f);
@@ -374,12 +375,17 @@ void Game::Draw(float deltaTime, float totalTime)
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap =
 			dx12Helper.GetCBVSRVDescriptorHeap();
 		commandList->SetDescriptorHeaps(1, descriptorHeap.GetAddressOf());
-		// Draw each entity 
-		for (auto entity : entities)
+
+		// Don't need to remake vsData for each and every object 
+		VertexShaderExternalData vsData = {};
+
+		// Info shared by all entities 
+		vsData.projection = *camera->GetProjMatrix();
+		vsData.view = *camera->GetViewMatrix();
+
+		// Draw each entity (per frame data)
+		for (Entity entity : entities)
 		{
-			VertexShaderExternalData vsData;
-			vsData.projection = *camera->GetProjMatrix();
-			vsData.view = *camera->GetViewMatrix();
 			vsData.world = entity.GetTransform()->GetWorldMatrix();
 
 			// Save to GPU 

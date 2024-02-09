@@ -7,7 +7,7 @@
 
 #include "Camera.h"
 #include "Entity.h"
-#include "BufferStructs.h";
+#include "BufferStructs.h"
 
 #include "AnimCurves.h"
 #include <algorithm>
