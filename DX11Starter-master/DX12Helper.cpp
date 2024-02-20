@@ -274,10 +274,39 @@ void DX12Helper::CreateCBVSRVDescriptorHeap()
 	D3D12_DESCRIPTOR_HEAP_DESC dhDesc = {};
 	dhDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE; // Shaders can see these!
 	dhDesc.NodeMask = 0; // Node here means physical GPU - we only have 1 so its index is 0
-	dhDesc.NumDescriptors = maxConstantBuffers; // How many descriptors will we need?
+	dhDesc.NumDescriptors = maxConstantBuffers + maxTextureDescriptors; // How many descriptors will we need?
 	dhDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; // This heap can store CBVs, SRVs and UAVs
 	device->CreateDescriptorHeap(&dhDesc, IID_PPV_ARGS(cbvSrvDescriptorHeap.GetAddressOf()));
 	// Assume the first CBV will be at the beginning of the heap
 	// This will increase as we use more CBVs and will wrap back to 0
 	cbvDescriptorOffset = 0;
+
+	// Assume the first SRV will be after all possible CBVs
+	srvDescriptorOffset = maxConstantBuffers;
+}
+
+/// <summary>
+/// Used to bring a srv table into the primary
+/// descriptor heap
+/// </summary>
+/// <returns>The starting address of the table subsection that represents the passed in srv heap</returns>
+D3D12_GPU_DESCRIPTOR_HANDLE DX12Helper::HeapSRVsToDescHeap(UINT numDescriptorsToCopy, D3D12_CPU_DESCRIPTOR_HANDLE firstDescriptorToCopy)
+{
+	// Grab the actual heap start on both sides and offset to the next open SRV portion
+	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle =
+		cbvSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle =
+		cbvSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	cpuHandle.ptr += (SIZE_T)srvDescriptorOffset * cbvSrvDescriptorHeapIncrementSize;
+	gpuHandle.ptr += (SIZE_T)srvDescriptorOffset * cbvSrvDescriptorHeapIncrementSize;
+	// We know where to copy these descriptors, so copy all of them and remember the new offset
+	device->CopyDescriptorsSimple(
+		numDescriptorsToCopy,
+		cpuHandle,
+		firstDescriptorToCopy,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	srvDescriptorOffset += numDescriptorsToCopy;
+	// Pass back the GPU handle to the start of this section
+	// in the final CBV/SRV heap so the caller can use it later
+	return gpuHandle;
 }
