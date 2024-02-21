@@ -3,6 +3,7 @@
 cbuffer matricies : register(b0)
 {
     matrix world;
+    matrix worldInvTranspose;
     matrix view;
     matrix proj;
 }
@@ -41,8 +42,11 @@ VertexToPixel main( VertexShaderInput input )
 	
     matrix mvp = mul(proj, mul(view, world));
     output.screenPosition = mul(mvp, float4(input.localPosition, 1.0f));
-
-	// Whatever we return will make its way through the pipeline to the
-	// next programmable stage we're using (the pixel shader for now)
+    output.normal = mul((float3x3) worldInvTranspose, input.normal); // Perfect
+    output.tangent = mul((float3x3) world, input.tangent);
+    output.uv = input.uv;
+	
+    output.worldPosition = mul(world, float4(input.localPosition, 1.0f)).xyz;
+	
 	return output;
 }

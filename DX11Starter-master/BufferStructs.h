@@ -3,5 +3,5 @@
 
 struct VertexShaderExternalData
 {
-	DirectX::XMFLOAT4X4 world, view, projection; 
+	DirectX::XMFLOAT4X4 world, worldInvTranspose, view, projection;
 };

@@ -19,11 +19,18 @@ void Material::AddTexture(D3D12_CPU_DESCRIPTOR_HANDLE srv, int slot)
 
 void Material::FinalizeMaterial()
 {
-	if (!finalized)
+	if (finalized)
 		return;
 
 	DX12Helper& dx12Helper = DX12Helper::GetInstance();
-	finalGPUHandleForSRVs = dx12Helper.HeapSRVsToDescHeap(4, textureSRVsBySlot[0]);
+	// Each much be done one at a time since they are each
+	// their own heap. They are NOT a continous array of 
+	// SRV's but a continous array of heaps 
+	finalGPUHandleForSRVs = dx12Helper.HeapSRVsToDescHeap(1, textureSRVsBySlot[0]);
+	dx12Helper.HeapSRVsToDescHeap(1, textureSRVsBySlot[1]);
+	dx12Helper.HeapSRVsToDescHeap(1, textureSRVsBySlot[2]);
+	dx12Helper.HeapSRVsToDescHeap(1, textureSRVsBySlot[3]);
+	finalized = true;
 }
 
 XMFLOAT3 Material::GetColorTint()
@@ -44,4 +51,14 @@ XMFLOAT2 Material::GetuvOffset()
 bool Material::GetFinalized()
 {
 	return finalized;
+}
+
+Microsoft::WRL::ComPtr<ID3D12PipelineState> Material::GetPipelineState()
+{
+	return pipelineState;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE Material::GetFinalGPUHandleForTextures()
+{
+	return finalGPUHandleForSRVs;
 }

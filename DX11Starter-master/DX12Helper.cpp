@@ -319,7 +319,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DX12Helper::HeapSRVsToDescHeap(UINT numDescriptorsTo
 D3D12_CPU_DESCRIPTOR_HANDLE DX12Helper::LoadTexture(const wchar_t* file, bool generateMips)
 {
 	// Helper function from DXTK for uploading a resource
-// (like a texture) to the appropriate GPU memory
+	// (like a texture) to the appropriate GPU memory
 	ResourceUploadBatch upload(device.Get());
 	upload.Begin();
 	// Attempt to create the texture

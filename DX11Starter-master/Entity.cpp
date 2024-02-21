@@ -21,6 +21,11 @@ std::shared_ptr<Transform> Entity::GetTransform()
 	return transform;
 }
 
+std::shared_ptr<Material> Entity::GetMaterial()
+{
+	return material;
+}
+
 #pragma endregion 
 
 #pragma region SETTERS
@@ -28,6 +33,11 @@ std::shared_ptr<Transform> Entity::GetTransform()
 void Entity::SetMesh(std::shared_ptr<Mesh> mesh)
 {
 	this->mesh = mesh;
+}
+
+void Entity::SetMaterial(std::shared_ptr<Material> material)
+{
+	this->material = material;
 }
 
 #pragma endregion

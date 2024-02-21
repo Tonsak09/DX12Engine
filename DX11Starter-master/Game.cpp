@@ -96,20 +96,20 @@ void Game::CreateRootSigAndPipelineState()
 		inputElements[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
 		inputElements[0].SemanticName = "POSITION";
 		inputElements[0].SemanticIndex = 0;
-		
+
 		inputElements[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-		inputElements[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-		inputElements[1].SemanticName = "TEXCOORD";
+		inputElements[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+		inputElements[1].SemanticName = "NORMAL";
 		inputElements[1].SemanticIndex = 0;
 
 		inputElements[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 		inputElements[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-		inputElements[2].SemanticName = "NORMAL";
+		inputElements[2].SemanticName = "TANGENT";
 		inputElements[2].SemanticIndex = 0;
 
 		inputElements[3].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-		inputElements[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-		inputElements[3].SemanticName = "TANGENT";
+		inputElements[3].Format = DXGI_FORMAT_R32G32_FLOAT;
+		inputElements[3].SemanticName = "TEXCOORD";
 		inputElements[3].SemanticIndex = 0;
 	}
 	// Root Signature
@@ -200,8 +200,6 @@ void Game::CreateRootSigAndPipelineState()
 			serializedRootSig->GetBufferSize(),
 			IID_PPV_ARGS(rootSignature.GetAddressOf()));
 
-
-		
 	}
 	// Pipeline state
 	{
@@ -265,6 +263,8 @@ void Game::CreateCamera()
 void Game::CreateGeometry()
 {
 	DX12Helper& dx12Helper = DX12Helper::GetInstance();
+	// rootSig.pStaticSamplers[0];
+
 
 	std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str());
 	std::shared_ptr<Mesh> helix = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str());
@@ -273,11 +273,10 @@ void Game::CreateGeometry()
 	std::shared_ptr<Material> basicMat = std::make_shared<Material>(pipelineState, DirectX::XMFLOAT3(1.0F, 0.5f, 0.5f), DirectX::XMFLOAT2(1.0f, 1.0f), DirectX::XMFLOAT2(0.0f, 0.0f));
 
 
-
-	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_Color").c_str()), 0);
-	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_Metalness").c_str()), 1);
-	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_NormalDX").c_str()), 2);
-	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_Roughness").c_str()), 2);
+	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_Color.jpg").c_str()), 0);
+	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_NormalDX.jpg").c_str()), 1);
+	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_Roughness.jpg").c_str()), 2);
+	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_Metalness.jpg").c_str()), 3);
 
 	basicMat->FinalizeMaterial();
 
@@ -390,6 +389,15 @@ void Game::Draw(float deltaTime, float totalTime)
 		for (Entity entity : entities)
 		{
 			vsData.world = entity.GetTransform()->GetWorldMatrix();
+			vsData.worldInvTranspose = entity.GetTransform()->GetWorldInverseTransposeMatrix();
+
+			std::shared_ptr<Material> mat = entity.GetMaterial();
+			commandList->SetPipelineState(mat->GetPipelineState().Get());
+
+			// Set the SRV descriptor handle for this material's textures
+			// Note: This assumes that descriptor table 2 is for textures (as per our root sig)
+			commandList->SetGraphicsRootDescriptorTable(2, mat->GetFinalGPUHandleForTextures());
+
 
 			// Save to GPU 
 			auto handle = dx12Helper.FillNextConstantBufferAndGetGPUDescriptorHandle(&vsData, sizeof(vsData));

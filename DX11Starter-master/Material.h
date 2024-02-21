@@ -27,6 +27,8 @@ public:
 	XMFLOAT2 GetuvScale();
 	XMFLOAT2 GetuvOffset();
 	bool GetFinalized();
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> GetPipelineState();
+	D3D12_GPU_DESCRIPTOR_HANDLE GetFinalGPUHandleForTextures();
 
 	void AddTexture(D3D12_CPU_DESCRIPTOR_HANDLE srv, int slot);
 	void FinalizeMaterial();
