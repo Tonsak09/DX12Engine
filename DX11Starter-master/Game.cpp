@@ -114,35 +114,71 @@ void Game::CreateRootSigAndPipelineState()
 	}
 	// Root Signature
 	{
-		//// Describe and serialize the root signature
-		//D3D12_ROOT_SIGNATURE_DESC rootSig = {};
-		//rootSig.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-		//rootSig.NumParameters = 0;
-		//rootSig.pParameters = 0;
-		//rootSig.NumStaticSamplers = 0;
-		//rootSig.pStaticSamplers = 0;
+		// Describe the range of CBVs needed for the vertex shader
+		D3D12_DESCRIPTOR_RANGE cbvRangeVS = {};
+		cbvRangeVS.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		cbvRangeVS.NumDescriptors = 1;
+		cbvRangeVS.BaseShaderRegister = 0;
+		cbvRangeVS.RegisterSpace = 0;
+		cbvRangeVS.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+		// Describe the range of CBVs needed for the pixel shader
+		D3D12_DESCRIPTOR_RANGE cbvRangePS = {};
+		cbvRangePS.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		cbvRangePS.NumDescriptors = 1;
+		cbvRangePS.BaseShaderRegister = 0;
+		cbvRangePS.RegisterSpace = 0;
+		cbvRangePS.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-		// Define a table of CBV's (constant buffer views)
-		D3D12_DESCRIPTOR_RANGE cbvTable = {};
-		cbvTable.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-		cbvTable.NumDescriptors = 1;
-		cbvTable.BaseShaderRegister = 0;
-		cbvTable.RegisterSpace = 0;
-		cbvTable.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		// Define the root parameter
-		D3D12_ROOT_PARAMETER rootParam = {};
-		rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-		rootParam.DescriptorTable.NumDescriptorRanges = 1;
-		rootParam.DescriptorTable.pDescriptorRanges = &cbvTable;
-		// Describe the overall the root signature
+		// Create a range of SRV's for textures
+		D3D12_DESCRIPTOR_RANGE srvRange = {};
+		srvRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		srvRange.NumDescriptors = 4; // Set to max number of textures at once (match pixel shader!)
+		
+		srvRange.BaseShaderRegister = 0; // Starts at s0 (match pixel shader!)
+		srvRange.RegisterSpace = 0;
+		srvRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+		// Create the root parameters
+		D3D12_ROOT_PARAMETER rootParams[3] = {};
+
+		// CBV table param for vertex shader
+		rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+		rootParams[0].DescriptorTable.NumDescriptorRanges = 1;
+		rootParams[0].DescriptorTable.pDescriptorRanges = &cbvRangeVS;
+
+		// CBV table param for pixel shader
+		rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParams[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		rootParams[1].DescriptorTable.NumDescriptorRanges = 1;
+		rootParams[1].DescriptorTable.pDescriptorRanges = &cbvRangePS;
+
+		// SRV table param
+		rootParams[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParams[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		rootParams[2].DescriptorTable.NumDescriptorRanges = 1;
+		rootParams[2].DescriptorTable.pDescriptorRanges = &srvRange;
+
+		// Create a single static sampler (available to all pixel shaders at the same slot)
+		D3D12_STATIC_SAMPLER_DESC anisoWrap = {};
+		anisoWrap.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		anisoWrap.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		anisoWrap.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		anisoWrap.Filter = D3D12_FILTER_ANISOTROPIC;
+		anisoWrap.MaxAnisotropy = 16;
+		anisoWrap.MaxLOD = D3D12_FLOAT32_MAX;
+		anisoWrap.ShaderRegister = 0; // register(s0)
+		anisoWrap.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		D3D12_STATIC_SAMPLER_DESC samplers[] = { anisoWrap };
+
+		// Describe and serialize the root signature
 		D3D12_ROOT_SIGNATURE_DESC rootSig = {};
 		rootSig.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-		rootSig.NumParameters = 1;
-		rootSig.pParameters = &rootParam;
-		rootSig.NumStaticSamplers = 0;
-		rootSig.pStaticSamplers = 0;
+		rootSig.NumParameters = ARRAYSIZE(rootParams);
+		rootSig.pParameters = rootParams;
+		rootSig.NumStaticSamplers = ARRAYSIZE(samplers);
+		rootSig.pStaticSamplers = samplers;
 
 
 		ID3DBlob* serializedRootSig = 0;
@@ -228,61 +264,28 @@ void Game::CreateCamera()
 // --------------------------------------------------------
 void Game::CreateGeometry()
 {
-	/*
-	// Create some temporary variables to represent colors
-	XMFLOAT4 red	= XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	XMFLOAT4 green	= XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	XMFLOAT4 blue	= XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-
-	// Set up the vertices of the triangle we would like to draw
-	// - We're going to copy this array, exactly as it exists in CPU memory
-	//    over to a Direct3D-controlled data structure on the GPU (the vertex buffer)
-	// - Note: Since we don't have a camera or really any concept of
-	//    a "3d world" yet, we're simply describing positions within the
-	//    bounds of how the rasterizer sees our screen: [-1 to +1] on X and Y
-	// - This means (0,0) is at the very center of the screen.
-	// - These are known as "Normalized Device Coordinates" or "Homogeneous 
-	//    Screen Coords", which are ways to describe a position without
-	//    knowing the exact size (in pixels) of the image/window/etc.  
-	// - Long story short: Resizing the window also resizes the triangle,
-	//    since we're describing the triangle in terms of the window itself
-	Vertex vertices[] =
-	{
-		{ XMFLOAT3(+0.0f, +0.5f, +0.0f) },
-		{ XMFLOAT3(+0.5f, -0.5f, +0.0f) },
-		{ XMFLOAT3(-0.5f, -0.5f, +0.0f) },
-	};
-
-	// Set up indices, which tell us which vertices to use and in which order
-	// - This is redundant for just 3 vertices, but will be more useful later
-	// - Indices are technically not required if the vertices are in the buffer 
-	//    in the correct order and each one will be used exactly once
-	// - But just to see how it's done...
-	unsigned int indices[] = { 0, 1, 2 };
-
-
-	// Create the two buffers
 	DX12Helper& dx12Helper = DX12Helper::GetInstance();
-	vertexBuffer = dx12Helper.CreateStaticBuffer(sizeof(Vertex), ARRAYSIZE(vertices), vertices);
-	indexBuffer = dx12Helper.CreateStaticBuffer(sizeof(unsigned int), ARRAYSIZE(indices), indices);
-	// Set up the views
-	vbView.StrideInBytes = sizeof(Vertex);
-	vbView.SizeInBytes = sizeof(Vertex) * ARRAYSIZE(vertices);
-	vbView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-	ibView.Format = DXGI_FORMAT_R32_UINT;
-	ibView.SizeInBytes = sizeof(unsigned int) * ARRAYSIZE(indices);
-	ibView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
-	*/
-	
+
 	std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str());
 	std::shared_ptr<Mesh> helix = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str());
 	std::shared_ptr<Mesh> torus = std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str());
 
+	std::shared_ptr<Material> basicMat = std::make_shared<Material>(pipelineState, DirectX::XMFLOAT3(1.0F, 0.5f, 0.5f), DirectX::XMFLOAT2(1.0f, 1.0f), DirectX::XMFLOAT2(0.0f, 0.0f));
+
+
+
+	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_Color").c_str()), 0);
+	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_Metalness").c_str()), 1);
+	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_NormalDX").c_str()), 2);
+	basicMat->AddTexture(dx12Helper.LoadTexture(FixPath(L"../../Assets/Textures/Foil002_4K-JPG_Roughness").c_str()), 2);
+
+	basicMat->FinalizeMaterial();
+
 	// Set meshes to entities 
-	entities.push_back(Entity(sphere));
-	entities.push_back(Entity(helix));
+	entities.push_back(Entity(sphere, basicMat));
+	entities.push_back(Entity(helix, basicMat));
 	entities[entities.size() - 1].GetTransform()->SetPosition(5.0f, 0.0f, 0.0f);
-	entities.push_back(Entity(torus));
+	entities.push_back(Entity(torus, basicMat));
 	entities[entities.size() - 1].GetTransform()->SetPosition(-5.0f, 0.0f, 0.0f);
 }
 

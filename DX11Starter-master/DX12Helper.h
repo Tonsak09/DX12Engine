@@ -4,9 +4,7 @@
 #include <wrl/client.h>
 #include <vector>
 
-#include "WICTextureLoader.h"
-#include "ResourceUploadBatch.h"
-using namespace DirectX;
+
 
 class DX12Helper
 {
@@ -106,6 +104,8 @@ public:
 	D3D12_GPU_DESCRIPTOR_HANDLE CopySRVsToDescriptorHeapAndGetGPUDescriptorHandle(
 		D3D12_CPU_DESCRIPTOR_HANDLE firstDescriptorToCopy,
 		unsigned int numDescriptorsToCopy);
+	
+	D3D12_GPU_DESCRIPTOR_HANDLE HeapSRVsToDescHeap(UINT numDescriptorsToCopy, D3D12_CPU_DESCRIPTOR_HANDLE firstDescriptorToCopy);
 
 private:
 	// Maximum number of texture descriptors (SRVs) we can have.
@@ -120,6 +120,5 @@ private:
 	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> textures;
 	std::vector<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>> cpuSideTextureDescriptorHeaps;
 
-	D3D12_GPU_DESCRIPTOR_HANDLE HeapSRVsToDescHeap(UINT numDescriptorsToCopy, D3D12_CPU_DESCRIPTOR_HANDLE firstDescriptorToCopy);
 };
 

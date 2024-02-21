@@ -1,7 +1,7 @@
 #include "Entity.h"
 
-Entity::Entity(std::shared_ptr<Mesh> mesh) :
-	mesh(mesh) 
+Entity::Entity(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material) :
+	mesh(mesh), material(material)
 {
 	transform = std::make_shared<Transform>();
 }
