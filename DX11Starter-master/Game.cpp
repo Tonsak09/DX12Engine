@@ -69,6 +69,7 @@ void Game::Init()
 	CreateRootSigAndPipelineState();
 	CreateCamera();
 	CreateGeometry();
+	CreateLights();
 }
 
 // --------------------------------------------------------
@@ -88,7 +89,8 @@ void Game::CreateRootSigAndPipelineState()
 
 		D3DReadFileToBlob(FixPath(L"PixelShader.cso").c_str(), pixelShaderByteCode.GetAddressOf());
 	}
-	// Input layout
+	// Input layout 
+	// THIS ORDER MATTERS! Match with VertexShaderInput
 	const unsigned int inputElementCount = 4;
 	D3D12_INPUT_ELEMENT_DESC inputElements[inputElementCount] = {};
 	{
@@ -288,6 +290,30 @@ void Game::CreateGeometry()
 	entities[entities.size() - 1].GetTransform()->SetPosition(-5.0f, 0.0f, 0.0f);
 }
 
+// --------------------------------------------------------
+// Creates the lights for the scene 
+// --------------------------------------------------------
+void Game::CreateLights()
+{
+	/*
+		DirectX::XMFLOAT3 directiton;
+		float range;
+		DirectX::XMFLOAT3 position;
+		float intensity;
+		DirectX::XMFLOAT3 color;
+		float spotFalloff;
+		DirectX::XMFLOAT3 padding;
+	*/
+
+	Light light1 = {};
+	light1.type = LIGHT_POINT;
+	light1.position = XMFLOAT3(10.0f, 0.0f, 0.0f);
+	light1.color = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	light1.range = 20.0f;
+	light1.spotFalloff = 0.3f;
+
+}
+
 
 // --------------------------------------------------------
 // Handle resizing to match the new window size.
@@ -381,6 +407,13 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Don't need to remake vsData for each and every object 
 		VertexShaderExternalData vsData = {};
 
+
+
+
+
+
+
+
 		// Info shared by all entities 
 		vsData.projection = *camera->GetProjMatrix();
 		vsData.view = *camera->GetViewMatrix();
@@ -397,6 +430,32 @@ void Game::Draw(float deltaTime, float totalTime)
 			// Set the SRV descriptor handle for this material's textures
 			// Note: This assumes that descriptor table 2 is for textures (as per our root sig)
 			commandList->SetGraphicsRootDescriptorTable(2, mat->GetFinalGPUHandleForTextures());
+
+
+
+			// Pixel shader data and cbuffer setup
+			{
+				PixelShaderExternalData psData = {};
+				psData.uvScale = mat->GetuvScale();
+				psData.uvOffset = mat->GetuvOffset();
+				psData.cameraPosition = *camera->GetTransform()->GetPosition().get();
+				psData.lightCount = lights.size();
+				memcpy(psData.lights, &lights[0], sizeof(Light) * MAX_LIGHTS);
+				// Send this to a chunk of the constant buffer heap
+				// and grab the GPU handle for it so we can set it for this draw
+					D3D12_GPU_DESCRIPTOR_HANDLE cbHandlePS =
+					dx12Helper.FillNextConstantBufferAndGetGPUDescriptorHandle
+				(
+						(void*)(&psData), sizeof(PixelShaderExternalData));
+				// Set this constant buffer handle
+				// Note: This assumes that descriptor table 1 is the
+				// place to put this particular descriptor. This
+				// is based on how we set up our root signature.
+				commandList->SetGraphicsRootDescriptorTable(1, cbHandlePS);
+			}
+
+
+
 
 
 			// Save to GPU 

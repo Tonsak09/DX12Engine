@@ -7,6 +7,21 @@ Texture2D MetalnessMap : register(t3);
 
 SamplerState texSampler : register(s0);
 
+// MUST match with lights.h 
+#define MAX_LIGHTS 5
+
+// Alignment matters!!!
+cbuffer ExternalData : register(b0)
+{
+    float2 uvScale;
+    float2 uvOffset;
+    float3 cameraPosition;
+    int lightCount;
+    Light lights[MAX_LIGHTS];
+}
+
+
+
 float2 GetUV(VertexToPixel input)
 {
     return input.uv;

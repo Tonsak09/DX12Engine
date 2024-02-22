@@ -7,6 +7,7 @@
 
 #include "Camera.h"
 #include "Entity.h"
+#include "Lights.h"
 #include "BufferStructs.h"
 
 #include "AnimCurves.h"
@@ -33,6 +34,7 @@ private:
 	void CreateRootSigAndPipelineState();
 	void CreateCamera();
 	void CreateGeometry();
+	void CreateLights();
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
@@ -50,6 +52,7 @@ private:
 	float fov;
 
 	std::vector<Entity> entities;
+	std::vector<std::shared_ptr<Light>> lights;
 
 	// Following variables are purely for assignment 2 
 	float InverseLerp(float a, float b, float v);

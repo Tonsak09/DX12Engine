@@ -11,3 +11,15 @@ struct VertexToPixel
     float3 tangent			: TANGENT;
     float2 uv				: TEXCOORD;
 };
+
+struct Light
+{
+    int type;
+    float3 directiton;
+    float range;
+    float3 position;
+    float intensity;
+    float3 color;
+    float spotFalloff;
+    float3 padding;
+};
