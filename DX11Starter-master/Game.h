@@ -52,7 +52,7 @@ private:
 	float fov;
 
 	std::vector<Entity> entities;
-	std::vector<std::shared_ptr<Light>> lights;
+	std::vector<Light> lights;
 
 	// Following variables are purely for assignment 2 
 	float InverseLerp(float a, float b, float v);

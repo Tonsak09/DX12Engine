@@ -21,7 +21,6 @@ cbuffer ExternalData : register(b0)
 }
 
 
-
 float2 GetUV(VertexToPixel input)
 {
     return input.uv;

@@ -312,6 +312,7 @@ void Game::CreateLights()
 	light1.range = 20.0f;
 	light1.spotFalloff = 0.3f;
 
+	lights.push_back(light1);
 }
 
 
