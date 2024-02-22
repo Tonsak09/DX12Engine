@@ -307,12 +307,37 @@ void Game::CreateLights()
 
 	Light light1 = {};
 	light1.type = LIGHT_POINT;
-	light1.position = XMFLOAT3(10.0f, 0.0f, 0.0f);
-	light1.color = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	light1.position = XMFLOAT3(5.0f, 0.0f, 0.0f);
+	light1.color = XMFLOAT3(1.0f, 0.5f, 0.0f);
 	light1.range = 20.0f;
 	light1.spotFalloff = 0.3f;
+	light1.intensity = 5.0f;
+
+	Light light2 = {};
+	light2.type = LIGHT_DIRECTION;
+	light2.color = XMFLOAT3(0.0f, 0.5f, 0.5f);
+	light2.directiton = XMFLOAT3(0.1f, -1.0f, 0.0f);
+	light2.spotFalloff = 0.3f;
+	light2.intensity = 5.0f;
+
+	Light light3 = {};
+	light3.type = LIGHT_DIRECTION;
+	light3.color = XMFLOAT3(0.1f, 0.8f, 0.5f);
+	light3.directiton = XMFLOAT3(0.0f, 1.0f, 0.2f);
+	light3.spotFalloff = 0.3f;
+	light3.intensity = 5.0f;
+
+	Light light4 = {};
+	light4.type = LIGHT_DIRECTION;
+	light4.color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	light4.directiton = XMFLOAT3(0.0f, -1.0f, 0.2f);
+	light4.spotFalloff = 0.3f;
+	light4.intensity = 10.0f;
 
 	lights.push_back(light1);
+	lights.push_back(light2);
+	lights.push_back(light3);
+	lights.push_back(light4);
 }
 
 
@@ -348,7 +373,7 @@ void Game::Update(float deltaTime, float totalTime)
 	entities[1].GetTransform()->SetScale(1.0f, GetCurveByIndex(EASE_IN_OUT_CUBIC, lerp + 0.5f) , 1.0f);
 
 	entities[2].GetTransform()->SetPosition(-5.0f, GetCurveByIndex(EASE_IN_OUT_ELASTIC, lerp) * 2.0f - 1.0f, 0.0f);
-	entities[2].GetTransform()->SetScale(1.0f, GetCurveByIndex(EASE_IN_OUT_ELASTIC, lerp), 1.0f);
+	entities[2].GetTransform()->SetScale(1.0f, GetCurveByIndex(EASE_IN_OUT_ELASTIC, lerp) + 0.1f, 1.0f);
 }
 
 // --------------------------------------------------------
@@ -440,7 +465,7 @@ void Game::Draw(float deltaTime, float totalTime)
 				psData.uvScale = mat->GetuvScale();
 				psData.uvOffset = mat->GetuvOffset();
 				psData.cameraPosition = *camera->GetTransform()->GetPosition().get();
-				psData.lightCount = lights.size();
+				psData.lightCount = (int)lights.size();
 				memcpy(psData.lights, &lights[0], sizeof(Light) * MAX_LIGHTS);
 				// Send this to a chunk of the constant buffer heap
 				// and grab the GPU handle for it so we can set it for this draw
